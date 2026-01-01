@@ -1,37 +1,69 @@
-"use client";
-
+'use client'
 import React, { useState, useMemo, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
+  Zap,
+  Rocket,
+  Flame,
+  Plus,
+  Minus,
+  Trophy,
   Activity,
-  Layers,
-  TrendingUp,
-  Info,
+  PartyPopper,
+  Sparkles,
+  Target,
+  CalendarDays,
+  BarChart3
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const NexusCalendar = () => {
+const PopPulseCalendar = () => {
+  // Always initialize to the current date/month
   const [currentDate, setCurrentDate] = useState(new Date());
   const [scores, setScores] = useState({});
 
+  // Persistence
   useEffect(() => {
-    const saved = localStorage.getItem("nexus_scores");
+    const saved = localStorage.getItem("pop_pulse_scores");
     if (saved) setScores(JSON.parse(saved));
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("nexus_scores", JSON.stringify(scores));
+    localStorage.setItem("pop_pulse_scores", JSON.stringify(scores));
   }, [scores]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
 
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+  const goToToday = () => setCurrentDate(new Date());
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
+
+  // Weekly Info Calculations
+  const weeklyStats = useMemo(() => {
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    let weekSum = 0;
+    Object.entries(scores).forEach(([dateStr, val]) => {
+      const d = new Date(dateStr);
+      if (d >= startOfWeek && d <= endOfWeek) {
+        weekSum += val;
+      }
+    });
+    return weekSum;
+  }, [scores]);
 
   const stats = useMemo(() => {
     const all = Object.entries(scores);
@@ -51,8 +83,11 @@ const NexusCalendar = () => {
   const toggleScore = (key, val) => {
     setScores((prev) => {
       const next = { ...prev };
-      if (next[key] === val) delete next[key];
-      else next[key] = val;
+      if (next[key] === val) {
+        delete next[key];
+      } else {
+        next[key] = val;
+      }
       return next;
     });
   };
@@ -62,198 +97,295 @@ const NexusCalendar = () => {
   }).format(currentDate);
 
   return (
-    <div className="h-screen w-screen bg-[#050505] text-white overflow-hidden pb-6">
-      {/* Background glow */}
-      <div className="fixed inset-0 pointer-events-none">
-        <motion.div
-          animate={{ scale: [1, 1.15, 1], opacity: [0.06, 0.12, 0.06] }}
-          transition={{ duration: 8, repeat: Infinity }}
-          className="absolute -top-32 -left-32 w-[45%] h-[45%] bg-cyan-500/10 blur-[140px] rounded-full"
-        />
-        <motion.div
-          animate={{ scale: [1.2, 1, 1.2], opacity: [0.06, 0.12, 0.06] }}
-          transition={{ duration: 10, repeat: Infinity }}
-          className="absolute -bottom-32 -right-32 w-[45%] h-[45%] bg-blue-600/10 blur-[140px] rounded-full"
-        />
+    <div className="h-screen w-screen bg-[#FFDE59] text-black font-mono p-6 selection:bg-pink-400 selection:text-white overflow-hidden flex flex-col relative">
+      {/* Dynamic Mesh Background */}
+      <div className="absolute inset-0 pointer-events-none opacity-40 overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#FF6AC1] blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-[#38B6FF] blur-[120px]" />
+        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] rounded-full bg-[#7ED957] blur-[100px]" />
       </div>
 
-      <div className="relative h-full px-10 pt-6 pb-10">
-        {/* Header */}
-        <header className="flex justify-between items-end mb-6">
-          <div>
-            <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-400 mb-1">
-              Temporal Log v4.0
-            </div>
-            <h1 className="text-4xl font-light tracking-tight">
-              {monthName}{" "}
-              <span className="text-zinc-500 text-xl">{year}</span>
-            </h1>
-          </div>
+      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.03]" 
+           style={{ backgroundImage: 'radial-gradient(circle, #000 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
 
-          <div className="flex gap-4">
-            <StatCard label="Year" value={stats.year} icon={<Activity size={14} />} />
-            <StatCard label="Quarter" value={stats.quarter} icon={<Layers size={14} />} />
-            <StatCard label="Month" value={stats.month} icon={<TrendingUp size={14} />} accent />
+      <div className="max-w-[1800px] mx-auto w-full h-full flex flex-col relative z-10">
+        {/* Header Section */}
+        <header className="flex flex-row justify-between items-end mb-8 shrink-0">
+          <motion.div 
+            initial={{ x: -50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            className="flex flex-col gap-2"
+          >
+            <div className="flex items-center gap-3">
+              <motion.div 
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.5 }}
+                className="bg-black p-2 shadow-[4px_4px_0px_0px_rgba(255,106,193,1)]"
+              >
+                <Zap className="text-yellow-300" size={32} />
+              </motion.div>
+              <h1 className="text-6xl font-black italic tracking-tighter uppercase drop-shadow-[4px_4px_0px_rgba(255,255,255,1)]">
+                {monthName}
+              </h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="bg-black text-white px-3 py-1 text-xl font-bold -rotate-1 shadow-[4px_4px_0px_0px_rgba(56,182,255,1)]">
+                {year}
+              </span>
+              <button 
+                onClick={goToToday}
+                className="ml-2 font-black text-xs uppercase bg-white border-2 border-black px-2 py-0.5 hover:bg-black hover:text-white transition-colors flex items-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px]"
+              >
+                <CalendarDays size={14} /> Today
+              </button>
+            </div>
+          </motion.div>
+
+          <div className="flex gap-6">
+            <StatPill label="WEEKLY" value={weeklyStats} color="bg-[#CB6CE6]" icon={<BarChart3 size={20} />} index={-1} />
+            <StatPill label="MONTHLY" value={stats.month} color="bg-[#5271FF]" icon={<Flame size={20} />} index={0} />
+            <StatPill label="YEARLY" value={stats.year} color="bg-[#FF5757]" icon={<Trophy size={20} />} index={1} />
+            <StatPill label="QUARTER" value={stats.quarter} color="bg-[#7ED957]" icon={<Rocket size={20} />} index={2} />
           </div>
         </header>
 
-        {/* Main layout */}
-        <div className="grid grid-cols-12 gap-6 h-[calc(100%-72px)]">
-          {/* Calendar */}
-          <div className="col-span-10 bg-zinc-900/60 rounded-3xl p-6 border border-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
-            <div className="flex justify-between mb-4">
-              <div className="flex gap-2">
-                <NavButton onClick={prevMonth} icon={<ChevronLeft size={18} />} />
-                <NavButton onClick={nextMonth} icon={<ChevronRight size={18} />} />
+        {/* Layout Content */}
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Main Calendar Card */}
+          <div className="lg:col-span-9 bg-white border-[6px] border-black p-6 shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] rounded-none relative flex flex-col h-full overflow-hidden">
+            <div className="flex justify-between items-center mb-6 shrink-0">
+              <div className="flex items-center gap-4">
+                <div className="flex bg-black p-1 shadow-[4px_4px_0px_0px_rgba(255,145,77,1)]">
+                  <NavBtn onClick={prevMonth} icon={<ChevronLeft size={28} />} />
+                  <div className="w-[2px] bg-white/20 mx-1" />
+                  <NavBtn onClick={nextMonth} icon={<ChevronRight size={28} />} />
+                </div>
+                <div className="h-10 w-[2px] bg-black/10 mx-2" />
+                <h2 className="font-black text-2xl uppercase tracking-tighter italic">Vibe Check Grid</h2>
               </div>
-              <span className="text-[10px] uppercase tracking-widest text-zinc-400">
-                System Synchronized
-              </span>
-            </div>
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`${month}-${year}`}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="grid grid-cols-7 gap-y-6 gap-x-2"
+              
+              <motion.div 
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="font-black text-lg uppercase tracking-widest bg-[#7ED957] border-[3px] border-black px-6 py-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
               >
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                  <div
-                    key={d}
-                    className="text-[10px] text-zinc-400 uppercase tracking-wider text-center"
-                  >
-                    {d}
-                  </div>
-                ))}
-
-                {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-                  <div key={`pad-${i}`} />
-                ))}
-
-                {Array.from({ length: daysInMonth }).map((_, i) => {
-                  const day = i + 1;
-                  const key = `${year}-${month + 1}-${day}`;
-                  return (
-                    <DayCell
-                      key={key}
-                      index={i}
-                      day={day}
-                      score={scores[key] || 0}
-                      onSelect={(v) => toggleScore(key, v)}
-                    />
-                  );
-                })}
+                Pulse: ACTIVE ⚡
               </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Sidebar */}
-          <div className="col-span-2 space-y-4">
-            <div className="bg-zinc-900/60 rounded-3xl p-5 border border-white/10">
-              <h3 className="text-[10px] uppercase tracking-widest text-zinc-400 mb-3 flex gap-2">
-                <Info size={14} /> Intelligence
-              </h3>
-              <p className="text-xs text-zinc-300 leading-relaxed">
-                +1 = high output  
-                <br />-1 = regression
-              </p>
             </div>
 
-            <div className="bg-gradient-to-br from-cyan-500/15 to-blue-600/15 rounded-3xl p-5 border border-cyan-500/30">
-              <h3 className="text-[10px] uppercase tracking-widest text-cyan-400 mb-2">
-                Focus Goal
+            {/* Calendar Grid */}
+            <div className="flex-1 grid grid-cols-7 grid-rows-[auto_repeat(6,1fr)] gap-3 min-h-0">
+              {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((d) => (
+                <div key={d} className="text-center font-black text-sm text-black/30 pb-2">
+                  {d}
+                </div>
+              ))}
+
+              {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                <div key={`pad-${i}`} className="bg-black/[0.03] border-[2px] border-dashed border-black/10 h-full w-full" />
+              ))}
+
+              {Array.from({ length: daysInMonth }).map((_, i) => {
+                const day = i + 1;
+                const key = `${year}-${month + 1}-${day}`;
+                const isToday = isCurrentMonth && today.getDate() === day;
+                return (
+                  <DaySquare
+                    key={key}
+                    day={day}
+                    isToday={isToday}
+                    score={scores[key] || 0}
+                    onSelect={(v) => toggleScore(key, v)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Sidebar Area */}
+          <aside className="lg:col-span-3 space-y-6 flex flex-col h-full overflow-hidden">
+            {/* Legend Card */}
+            <motion.div 
+              whileHover={{ rotate: -1, scale: 1.02 }}
+              className="bg-[#CB6CE6] border-[6px] border-black p-5 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] shrink-0"
+            >
+              <h3 className="font-black text-2xl mb-4 flex items-center gap-3 text-white uppercase italic drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                <PartyPopper size={28} /> The Rules
               </h3>
-              <div className="text-2xl font-light text-white">+40</div>
-              <div className="text-[9px] text-zinc-400 uppercase">
-                Annual Target
+              <div className="space-y-3">
+                <LegendItem color="bg-[#7ED957]" label="CRUSHED IT" sub="+1 Points" />
+                <LegendItem color="bg-white" label="NEUTRAL" sub="0 Points" />
+                <LegendItem color="bg-[#FF5757]" label="REGRESSION" sub="-1 Points" />
+              </div>
+            </motion.div>
+
+            {/* Weekly Info Card (NEW) */}
+            <div className="bg-black border-[6px] border-[#7ED957] p-5 shadow-[10px_10px_0px_0px_rgba(126,217,87,0.3)] shrink-0">
+               <div className="flex justify-between items-center mb-2">
+                 <h4 className="font-black text-xs text-[#7ED957] uppercase tracking-widest flex items-center gap-2">
+                   <Activity size={14} /> Weekly Pulse
+                 </h4>
+                 <span className="text-[10px] text-white/40 font-bold uppercase">Current Week</span>
+               </div>
+               <div className="flex items-baseline gap-2">
+                 <div className={`text-4xl font-black italic ${weeklyStats >= 0 ? 'text-[#7ED957]' : 'text-[#FF5757]'}`}>
+                   {weeklyStats > 0 ? `+${weeklyStats}` : weeklyStats}
+                 </div>
+                 <div className="text-[10px] font-black text-white/60 uppercase">Total Score</div>
+               </div>
+               <div className="mt-3 w-full bg-white/10 h-2 border border-white/20 overflow-hidden">
+                 <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(100, Math.max(0, (weeklyStats / 7) * 100))}%` }}
+                  className="h-full bg-[#7ED957]" 
+                 />
+               </div>
+            </div>
+
+            {/* Target Card */}
+            <div className="bg-[#38B6FF] border-[6px] border-black p-6 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] flex-1 flex flex-col items-center justify-center text-center relative overflow-hidden group">
+              <motion.div 
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="absolute -top-10 -right-10 opacity-10 group-hover:opacity-20 transition-opacity"
+              >
+                <Target size={200} />
+              </motion.div>
+              
+              <div className="relative z-10">
+                <div className="font-black text-sm uppercase tracking-[0.3em] mb-2 text-black/60">Annual Target</div>
+                <div className="text-8xl font-black text-white drop-shadow-[6px_6px_0px_rgba(0,0,0,1)] italic">
+                  +40
+                </div>
+                <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-black text-[#FFDE59] text-xs font-black uppercase tracking-widest -rotate-2">
+                  <Sparkles size={14} /> KEEP THE GRIND
+                </div>
               </div>
             </div>
-          </div>
+
+            {/* Info Footer */}
+            <div className="p-5 border-[6px] border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] shrink-0">
+               <div className="flex items-center gap-4 mb-2">
+                 <div className="bg-[#FF5757] p-2 border-2 border-black">
+                   <Activity className="text-white" size={24} />
+                 </div>
+                 <div className="font-black text-xs uppercase leading-tight">
+                   Neuro-Plasticity <br/>Synchronization
+                 </div>
+               </div>
+               <p className="text-[10px] font-bold text-black/50 uppercase leading-none mt-4 border-t-2 border-black/5 pt-4">
+                 Tracking since {year}
+               </p>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
   );
 };
 
-/* ---------- Components ---------- */
+/* --- UI COMPONENTS --- */
 
-const StatCard = ({ label, value, icon, accent }) => (
-  <div
-    className={`p-3 rounded-2xl border min-w-[110px] ${
-      accent ? "bg-white/5 border-white/15" : "border-white/10"
-    }`}
-  >
-    <div className="flex gap-2 text-[10px] text-zinc-400 mb-1">
-      {icon} {label}
+const LegendItem = ({ color, label, sub }) => (
+  <div className="flex items-center gap-3">
+    <div className={`w-10 h-10 ${color} border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center font-black`}>
+      {label[0]}
     </div>
-    <div
-      className={`text-xl ${
-        value > 0
-          ? "text-cyan-400"
-          : value < 0
-          ? "text-rose-500"
-          : "text-white"
-      }`}
-    >
-      {value > 0 ? `+${value}` : value}
+    <div className="flex flex-col">
+      <div className="font-black text-xs text-white uppercase">{label}</div>
+      <div className="font-bold text-[10px] text-white/60 uppercase">{sub}</div>
     </div>
   </div>
 );
 
-const NavButton = ({ onClick, icon }) => (
-  <button
-    onClick={onClick}
-    className="p-2 rounded-full border border-white/10 bg-white/5 text-zinc-300 hover:text-white hover:bg-white/10"
-  >
-    {icon}
-  </button>
-);
-
-const DayCell = ({ day, score, onSelect, index }) => (
+const StatPill = ({ label, value, icon, color, index }) => (
   <motion.div
-    initial={{ opacity: 0, y: 8 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: index * 0.008 }}
-    className="flex flex-col items-center relative"
+    initial={{ y: 20, opacity: 0 }}
+    animate={{ y: 0, opacity: 1 }}
+    transition={{ delay: index * 0.1 }}
+    whileHover={{ y: -8, rotate: index % 2 === 0 ? 2 : -2 }}
+    className={`${color} border-[4px] border-black p-4 min-w-[150px] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] group cursor-default`}
   >
-    <span className="text-[10px] text-zinc-400 mb-1">
-      {day.toString().padStart(2, "0")}
-    </span>
-    <div className="flex flex-col gap-1 p-1 rounded-xl border border-white/10 bg-white/[0.05] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]">
-      <ScoreButton label="+1" active={score === 1} color="bg-cyan-500" onClick={() => onSelect(1)} />
-      <ScoreButton label="0" active={score === 0} onClick={() => onSelect(0)} />
-      <ScoreButton label="-1" active={score === -1} color="bg-rose-500" onClick={() => onSelect(-1)} />
+    <div className="flex items-center gap-2 text-[10px] font-black uppercase text-black/40 mb-1 group-hover:text-black transition-colors">
+      {icon} {label}
     </div>
-    <AnimatePresence>
-      {score !== 0 && (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          exit={{ scale: 0 }}
-          className={`absolute -bottom-2 w-1 h-1 rounded-full ${
-            score === 1 ? "bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.8)]" : "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]"
-          }`}
-        />
-      )}
-    </AnimatePresence>
+    <div className="text-4xl font-black text-white drop-shadow-[3px_3px_0px_rgba(0,0,0,1)] leading-none italic">
+      {value > 0 ? `+${value}` : value}
+    </div>
   </motion.div>
 );
 
-const ScoreButton = ({ label, active, onClick, color }) => (
+const NavBtn = ({ onClick, icon }) => (
   <motion.button
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.9 }}
+    whileHover={{ scale: 1.2 }}
+    whileTap={{ scale: 0.8 }}
     onClick={onClick}
-    className={`w-8 h-6 rounded-lg text-[9px] font-bold ${
-      active
-        ? `${color} text-black shadow-[0_0_12px_rgba(34,211,238,0.35)]`
-        : "text-zinc-300 hover:bg-white/10"
-    }`}
+    className="p-2 text-white hover:text-yellow-300 transition-colors"
   >
-    {label}
+    {icon}
   </motion.button>
 );
 
-export default NexusCalendar;
+const DaySquare = ({ day, score, onSelect, isToday }) => {
+  return (
+    <div className="flex flex-col items-center h-full w-full group">
+      <span className={`text-[11px] font-black mb-1 transition-colors ${isToday ? 'text-black bg-yellow-300 px-2 border-2 border-black rotate-3 z-10' : 'text-black/30 group-hover:text-black'}`}>
+        {day.toString().padStart(2, "0")}
+      </span>
+      <div className={`flex-1 w-full border-[4px] border-black transition-all flex flex-col justify-center p-1
+        ${score === 1 ? 'bg-[#7ED957] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' : 
+          score === -1 ? 'bg-[#FF5757] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' : 
+          'bg-gray-50 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:bg-white hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]'}
+      `}>
+        <div className="flex flex-col gap-1 h-full">
+          <ActionButton 
+            active={score === 1} 
+            color="bg-black" 
+            onClick={() => onSelect(1)}
+            icon={<Plus size={18} />}
+          />
+          <ActionButton 
+            active={score === -1} 
+            color="bg-black" 
+            onClick={() => onSelect(-1)}
+            icon={<Minus size={18} />}
+          />
+        </div>
+      </div>
+      <div className="h-7 mt-1 flex items-start">
+        <AnimatePresence>
+          {score !== 0 && (
+            <motion.div
+              initial={{ scale: 0, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0, y: 10 }}
+              className={`font-black text-[10px] px-2 py-0.5 border-[3px] border-black leading-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]
+                ${score === 1 ? 'bg-[#7ED957] rotate-2' : 'bg-[#FF5757] -rotate-2 text-white'}`}
+            >
+              {score > 0 ? 'WIN' : 'FAIL'}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
+const ActionButton = ({ active, onClick, color, icon }) => (
+  <motion.button
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.9, rotate: active ? 0 : 5 }}
+    onClick={onClick}
+    className={`flex-1 w-full border-[2px] border-black flex items-center justify-center transition-all
+      ${active ? `${color} text-white` : "bg-white/40 hover:bg-white text-black/40 hover:text-black"}
+    `}
+  >
+    <div className={active ? "scale-125 font-black" : "scale-100"}>
+      {icon}
+    </div>
+  </motion.button>
+);
+
+export default PopPulseCalendar;
